@@ -1,0 +1,24 @@
+{
+  "name": "simpleshopbackend",
+  "version": "1.0.0",
+  "description": "Back end for Simple Shop",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarkBranton1999/SimpleShopBackEnd.git"
+  },
+  "author": "Mark Branton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MarkBranton1999/SimpleShopBackEnd/issues"
+  },
+  "homepage": "https://github.com/MarkBranton1999/SimpleShopBackEnd#readme"
+}
