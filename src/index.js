@@ -1,11 +1,13 @@
 var express = require("express");
 var sha256 = require('js-sha256');
+var cors = require('cors');
 var app = express();
 
 module.exports = app;
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({extended: true}));
+app.use(cors());
 
 var mysql = require('mysql');
 var connection = mysql.createConnection({
@@ -44,46 +46,34 @@ var sanitizeInput = function(input){
   return sanitizedInput;
 }
 //Get Requests
-app.get("/login", function(req, res){
-  console.log(req.body);
-  if(!req.body){
-    res.status(400);
-    res.json({message: "Bad Request"});
-    return;
-  }
-  if(!req.body.username || !req.body.password){
-    res.status(400);
-    res.json({message: "Bad Request"});
-    return;
-  }
-  else{
-    //sanitize the username to prevent SQL injections
-    var sanitizedUsername = sanitizeInput(req.body.username);
+app.get("/login/:username/:password", function(req, res){
+  console.log(req.params);
+  //sanitize the username to prevent SQL injections
+  var sanitizedUsername = sanitizeInput(req.params.username);
 
-    //hash the password and then salt and hash again
-    var salt = "ABCDEFGHIJK";
-    var hash = sha256(req.body.password);
-    hash = hash + salt;
-    hash = sha256(hash);
+  //hash the password and then salt and hash again
+  var salt = "ABCDEFGHIJK";
+  var hash = sha256(req.params.password);
+  hash = hash + salt;
+  hash = sha256(hash);
 
-    var sql = "SELECT token FROM users WHERE username='" + sanitizedUsername + "' AND password='" + hash + "';";
-    connection.query(sql, function (err, result) {
-      if (err){
-        res.status(500);
-        res.json({message: err.code});
-      }
-      if(result.length > 0){
-        console.log(result);
-        res.status(200);
-        res.json({
-          token: result[0].token,
-          message: "Login Successful"});
-      } else{
-        res.status(404);
-        res.json({message: "Incorrect Username or Password"});
-      }
-    });
-  }
+  var sql = "SELECT token FROM users WHERE username='" + sanitizedUsername + "' AND password='" + hash + "';";
+  connection.query(sql, function (err, result) {
+    if (err){
+      res.status(500);
+      res.json({message: err.code});
+    }
+    if(result.length > 0){
+      console.log(result);
+      res.status(200);
+      res.json({
+        token: result[0].token,
+        message: "Login Successful"});
+    } else{
+      res.status(404);
+      res.json({message: "Incorrect Username or Password"});
+    }
+  });
 });
 
 //Post Requests
