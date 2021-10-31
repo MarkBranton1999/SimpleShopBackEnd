@@ -20,14 +20,19 @@ var connection = mysql.createConnection({
 connection.connect(function(err){
     if (err) throw err;
     console.log("Connected to DB");
-    var sql = "CREATE TABLE IF NOT EXISTS users (username varchar(255) NOT NULL PRIMARY KEY, password varchar(255) NOT NULL, token varchar(255));";
-    connection.query(sql, function (err, result) {
-      if (err){
-        res.status(500);
-        res.json({message: err.code});
-      }
-        //console.log(result);
+    var sql = [];
+    sql.push( "CREATE TABLE IF NOT EXISTS users (username varchar(255) NOT NULL PRIMARY KEY, password varchar(255) NOT NULL, token varchar(255));");
+    sql.push( "CREATE TABLE IF NOT EXISTS inventory (productId int NOT NULL AUTO_INCREMENT PRIMARY KEY, productName varchar(255) NOT NULL, price decimal(10,2), quantity int NOT NULL);");
+    sql.push( "CREATE TABLE IF NOT EXISTS orders (orderId int NOT NULL AUTO_INCREMENT PRIMARY KEY, productId int NOT NULL, quantity int NOT NULL, price decimal(10,2), username varchar(255) NOT NULL, FOREIGN KEY (username) REFERENCES users(username), FOREIGN KEY (productId) REFERENCES inventory(productId));");
+    for(var i = 0; i < sql.length; i++){
+      connection.query(sql[i], function (err, result) {
+        if (err){
+          res.status(500);
+          res.json({message: err.code});
+        }
+          //console.log(result);
       });
+    }
 });
 
 app.listen(3000, () => {
@@ -74,6 +79,42 @@ app.get("/login/:username/:password", function(req, res){
       res.json({message: "Incorrect Username or Password"});
     }
   });
+});
+
+
+app.get("/inventory/:token", function(req, res){
+  console.log(req.params);
+  //sanitize the token to prevent SQL injections
+  var sanitizedToken = sanitizeInput(req.params.token);
+  //initialize tokenValid to false and update it to true if the token is in the database
+  var tokenValid = false;
+  var sql = "SELECT * FROM users WHERE token='" + sanitizedToken + "';";
+  connection.query(sql, function(err, result){
+    if (err){
+      res.status(500);
+      res.json({message: err.code});
+    }
+    if(result.length > 0){
+      tokenValid = true;
+    }
+    var sql2 = "SELECT * FROM inventory;";
+    if(tokenValid){
+      connection.query(sql2, function(err, result){
+        if (err){
+          res.status(500);
+          res.json({message: err.code});
+        }
+        else {
+          res.status(200);
+          res.json({data: result});
+        }
+      });
+    } else{
+      res.status(403);
+      res.json({message: "Invalid User Token"});
+    }
+  });
+
 });
 
 //Post Requests
