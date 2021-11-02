@@ -82,39 +82,20 @@ app.get("/login/:username/:password", function(req, res){
 });
 
 
-app.get("/inventory/:token", function(req, res){
-  console.log(req.params);
-  //sanitize the token to prevent SQL injections
-  var sanitizedToken = sanitizeInput(req.params.token);
-  //initialize tokenValid to false and update it to true if the token is in the database
-  var tokenValid = false;
-  var sql = "SELECT * FROM users WHERE token='" + sanitizedToken + "';";
+app.get("/inventory", function(req, res){
+  
+  var sql = "SELECT * FROM inventory;";
   connection.query(sql, function(err, result){
     if (err){
       res.status(500);
       res.json({message: err.code});
     }
-    if(result.length > 0){
-      tokenValid = true;
-    }
-    var sql2 = "SELECT * FROM inventory;";
-    if(tokenValid){
-      connection.query(sql2, function(err, result){
-        if (err){
-          res.status(500);
-          res.json({message: err.code});
-        }
-        else {
-          res.status(200);
-          res.json({data: result});
-        }
-      });
-    } else{
-      res.status(403);
-      res.json({message: "Invalid User Token"});
+    else {
+      res.status(200);
+      res.json({data: result});
     }
   });
-
+  
 });
 
 //Post Requests
